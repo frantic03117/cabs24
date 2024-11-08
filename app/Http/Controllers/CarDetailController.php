@@ -64,68 +64,56 @@ class CarDetailController extends Controller
     }
     public function generate_pdf($id)
     {
-       
         $items = Http::withOptions([
             'verify' => false,
-        ])->get('https://cabs24.co.in:7456/api/v1/form/inspections/details/'.$id);
+        ])->get('https://cabs24.co.in:7456/api/v1/form/inspections/details/' . $id);
         $data = $items->json();
-        // return response()->json($data);
-        // die;
+        return response()->json($data);
+        die;
+
         $oimages = Http::withOptions([
             'verify' => false,
-        ])->get('https://cabs24.co.in:7456/api/v1/form/inspections/other-images/?id='.$id);
+        ])->get('https://cabs24.co.in:7456/api/v1/form/inspections/other-images/?id=' . $id);
         $other_imgs  = $oimages->json();
-        // echo json_encode($other_imgs);
-        // die;
+
         $dets = [];
         $details = [];
         $carimages = [];
         foreach ($data['data']['inspections'] as $k => $val) {
 
-            if ($val['key']['type'] == "image" && $val['key']['field'] != "rc_image" ) {
+            if ($val['key']['type'] == "image" && $val['key']['field'] != "rc_image") {
                 $irr = [
                     'image' => $val['string_value'],
                     'name' => $val['key']['name'],
-                   'created_at' => Carbon::parse($val['createdAt'])
-                           ->addHours(5)
-                           ->addMinutes(30)
-                           ->format('M-d, Y h:i A')
+                    'created_at' => Carbon::parse($val['createdAt'])
+                        ->addHours(5)
+                        ->addMinutes(30)
+                        ->format('M-d, Y h:i A')
                 ];
                 array_push($carimages, $irr);
             }
         }
-        foreach($other_imgs['data'] as $k => $val ){
-        
-             $irr = [
-                    'image' => $val['image'],
-                    'name' => 'Other Image',
-                    'created_at' => Carbon::parse($val['createdAt'])
-                           ->addHours(5)
-                           ->addMinutes(30)
-                           ->format('M-d, Y h:i A')
-                ];
-              array_push($carimages, $irr);
+        foreach ($other_imgs['data'] as $k => $val) {
+
+            $irr = [
+                'image' => $val['image'],
+                'name' => 'Other Image',
+                'created_at' => Carbon::parse($val['createdAt'])
+                    ->addHours(5)
+                    ->addMinutes(30)
+                    ->format('M-d, Y h:i A')
+            ];
+            array_push($carimages, $irr);
         }
 
         $collection = collect($data['data']['inspections']);
-        // return response()->json($carimages);
-        // die;
+
         foreach ($collection as $col) {
             $key = $col['key']['field'];
             $item = $collection->firstWhere('key.field', $key);
             $details[$key] = $item['string_value'];
         }
         $rats = $collection->where('key.type', 'rating')->toArray();
-        
-      
-
-       
-    
-        // return response()->json($rats);
-        // die;
-
-
-
         $details['inspection_id'] = $data['data']['inspection_id'];
         $details['custom_inspection_id'] = $data['data']['custom_inspection_id'];
         $details['executive_name'] = $data['data']['user']['name'];
@@ -133,10 +121,7 @@ class CarDetailController extends Controller
         $details['registration_number'] = $data['data']['registration_number'];
         $details['doi'] = $data['data']['createdAt'];
         $res = compact('details', 'carimages', 'rats');
-    //   return response()->json($res);
-    //     die;
-        // return view('pdf.car-details', $res);
-        // die;
+
         $context = stream_context_create([
             'ssl' => [
                 'verify_peer' => false,
@@ -144,32 +129,29 @@ class CarDetailController extends Controller
             ]
         ]);
 
-       $pdf = PDF::setOptions([
-        'isRemoteEnabled' => true,
-        'isHtml5ParserEnabled' => true,
-        'tempDir' => storage_path('app')
-    ])
-    ->loadView('pdf.test', $res)
-    ->setPaper('a4');
+        $pdf = PDF::setOptions([
+            'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true,
+            'tempDir' => storage_path('app')
+        ])
+            ->loadView('pdf.test', $res)
+            ->setPaper('a4');
+        $pdf->getDomPDF()->setHttpContext($context);
+        $domPdf = $pdf->getDomPDF();
+        $domPdf->set_option('isPhpEnabled', true);
+        $domPdf->render();
+        $canvas = $domPdf->get_canvas();
+        $canvas->page_text(
+            $canvas->get_width() - 80,
+            $canvas->get_height() - 30,
+            "Page {PAGE_NUM} of {PAGE_COUNT}",
+            null,
+            10,
+            [0, 0, 0],
+            1
+        );
 
-    // Apply context before rendering
-    $pdf->getDomPDF()->setHttpContext($context);
-    $domPdf = $pdf->getDomPDF();
-    $domPdf->set_option('isPhpEnabled', true);
-    $domPdf->render(); // Render PDF first
-
-    $canvas = $domPdf->get_canvas();
-    $canvas->page_text(
-        $canvas->get_width() - 80, // Centered horizontally
-        $canvas->get_height() - 30, // 30 pixels from the bottom
-        "Page {PAGE_NUM} of {PAGE_COUNT}",
-        null, // Font (null for default)
-        10, // Font size
-        [0, 0, 0], // Color
-        1 // Center alignment
-    );
-
-    return $pdf->stream($details['registration_number'] . '.pdf');
+        return $pdf->stream($details['registration_number'] . '-' . $details['select_variant'] . '.pdf');
     }
     /**
      * Show the form for creating a new resource.

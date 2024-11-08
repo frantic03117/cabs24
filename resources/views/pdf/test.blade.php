@@ -12,7 +12,6 @@
         rel="stylesheet">
 
     <style>
-        /** Define the margins of your page **/
         @page {
             margin: 120px 25px;
         }
@@ -36,7 +35,6 @@
             bottom: -113px;
             left: 0px;
             right: 0px;
-
         }
 
         @font-face {
@@ -73,7 +71,6 @@
 
         table {
             width: 100%;
-
         }
 
         .table {
@@ -105,12 +102,7 @@
             color: #000;
             font-size: 12px;
             display: inline-block;
-
             margin: 0;
-
-
-            /*border-top:1px solid #393838;*/
-
         }
 
         table.detailstable tr td label {
@@ -462,21 +454,6 @@
                 ];
             @endphp
 
-
-            <!--<table border="0">-->
-            <!--    <tr>-->
-            <!--        <td style="width:150px;">-->
-            <!--            <img width="150" src="{{ url('public/images/logo.png') }}" alt=""-->
-            <!--                style="max-width:100%;">-->
-            <!--        </td>-->
-            <!--        <td style="text-align: right;">-->
-            <!--            <h4 style="font-size:14px;margin: 0;padding: 0;">Vehicle Inspection Report</h4>-->
-            <!--            <p style="font-size:14px;margin: 0;padding: 0;">-->
-            <!--                Certificate No.: {{ $details['custom_inspection_id'] }}-->
-            <!--            </p>-->
-            <!--        </td>-->
-            <!--    </tr>-->
-            <!--</table>-->
 
 
 
